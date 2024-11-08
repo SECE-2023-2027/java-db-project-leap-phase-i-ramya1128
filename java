@@ -190,6 +190,55 @@ public class Main {
 			System.out.println("PassWord:"+rs.getString("password"));
 			System.out.println("User ID:"+rs.getString("user_Id"));
 		}
+		/* System.out.println("Enter the values to be updated");
+                String name=scan.nextLine();
+                String pass=scan.nextLine();
+                int id=scan.nextInt();
+                String Updatequery="update users set username=?,password=? where user_id=? ";
+                PreparedStatement ps=con.prepareStatement(Updatequery);
+                ps.setString(1, name);
+                ps.setString(2, pass);
+                ps.setInt(3, id);
+    int updateRes=ps.executeUpdate();
+    if(updateRes>0) {
+    	System.out.println("User details updated successfully!!");
+    }
+    else {
+    	System.out.println("No user is found ");
+    }*/
+    
+    //delete 
+  /*  System.out.println("Enter the user id to be deleted");
+    int id=scan.nextInt();
+    String deleteQuery="delete from users where user_id=?";
+    PreparedStatement ps=con.prepareStatement(deleteQuery);
+    ps.setInt(1, id);
+    int delRes=ps.executeUpdate();
+    if(delRes>0) {
+    	System.out.println("User deleted Successfully!!");
+    }
+    else {
+    	System.out.println("Invalid userid!!");
+    }*/
+    System.out.println("Enter the user ID:");
+    int id = scan.nextInt();
+
+    // Prepare the SQL query
+    String selectQuery = "SELECT username, password, user_id FROM users WHERE user_id = ?";
+    PreparedStatement ps = con.prepareStatement(selectQuery);
+    ps.setInt(1, id);  // Set the parameter
+
+    // Execute the query
+    ResultSet res = ps.executeQuery();  // Do not pass selectQuery again
+
+    // Process the results
+    if (res.next()) {
+        System.out.println("Username: " + res.getString("username"));
+        System.out.println("Password: " + res.getString("password"));
+        System.out.println("User ID: " + res.getInt("user_id"));
+    } else {
+        System.out.println("No user found with the given user ID.");
+    }
 	}
 
 }
