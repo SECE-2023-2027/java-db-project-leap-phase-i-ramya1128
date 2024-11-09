@@ -1,98 +1,107 @@
--- create database bankingApp;
+create database bankingApp;
 use bankingApp;
-/*create table Bank(bank_id int primary key auto_increment,Bank_name varchar(100) not null,Bank_branch varchar(100)not null);
-insert into Bank(Bank_name,Bank_branch)values('ABC','Main branch');
-insert into Bank(Bank_name,Bank_branch)values('XYZ','Main branch');
-select*from Bank;
-create table Account(account_id int primary key unique auto_increment,customer_id int not null,bank_id int,account_type varchar(50) not null,balance decimal(15,2) not null,created_at timestamp default current_timestamp,foreign key(bank_id)references Bank(bank_id));
-create table SavingsAccount(account_id int primary key,interest_rate decimal(5,2) not null,foreign key(account_id)references Account(account_id));
-create table CurrentAccount(account_id int primary key,overdraft_limit decimal(15,2) not null,foreign key(account_id)references Account(account_id));
-create table Transaction(transaction_id int primary key auto_increment,account_id int not null,transaction_method varchar(50) not null,amount decimal(15,2),transaction_date timestamp default current_timestamp,foreign key(account_id) references Account(account_id));
-create table DepositTransaction(transaction_id int primary key,deposit_method varchar(50) not null,foreign key(transaction_id) references Transaction(transaction_id));
-create table WithdrawTransaction(transaction_id int primary key,withdraw_method varchar(50) not null,foreign key(transaction_id) references Transaction(transaction_id));
+
+create table Bank(
+bank_id INT PRIMARY KEY auto_increment,
+bank_name VARCHAR(100) NOT NULL,
+bank_branch VARCHAR(100) NOT NULL
+);
+
+INSERT INTO Bank (bank_name, bank_branch)
+values('ABC', 'Main branch');
+
+INSERT INTO Bank (bank_name, bank_branch)
+values('XYZ', 'Main branch');
+
+select * from Bank;
+select*from account;
+
+create table Account(
+accounyt_id INT PRIMARY KEY UNIQUE auto_increment,
+customer_id INT NOT NULL,
+bank_id INT,
+account_type VARCHAR(50) NOT NULL,
+balance DECIMAL(15,2) NOT NULL,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+FOREIGN KEY(bank_id) REFERENCES Bank(bank_id));
+
+create table SavingsAccount(
+account_id INT Primary Key,
+interset_rate DECIMAL(5,2) NOT NULL,
+foreign key(account_id) references Account(accounyt_id));
+
+create table CurrentAccount(
+account_id INT Primary Key,
+overdraft_limit DECIMAL(15,2) NOT NULL,
+foreign key(account_id) references Account(accounyt_id));
+
+create table Transaction (
+transaction_id INT Primary key auto_increment,
+account_id int not null,
+transaction_type varchar(50) not null,
+amount decimal(15,2) not null,
+transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+foreign key(account_id) references Account(accounyt_id));
+
+create table DepositTransaction(
+transaction_id int primary key,
+deposit_method varchar(50) not null,
+foreign key (transaction_id) references Transaction(transaction_id));
+
+create table WithdrawTransaction(
+transaction_id int primary key,
+withdraw_method varchar(50) not null,
+foreign key (transaction_id) references Transaction(transaction_id));
+
 create database sample;
 use sample;
-create table users(username varchar(50),password varchar(50),user_id int);
-select*from bankingApp.Account;*/
- -- -select*from bankingApp.Account;
 
-/*DELIMITER //
+create table users (
+username varchar(100),
+password varchar(100),
+user_id int);
 
-CREATE PROCEDURE transfer_funds(
-    IN from_account INT,
-    IN to_account INT,
-    IN amount DECIMAL(15, 2)
-)
+select * from users;
+select * from account;
+
+
+
+\\Transfer
+
+DELIMITER %
+CREATE PROCEDURE transfer_funds(IN from_account INT, IN to_account INT, IN amount DECIMAL(15,2))
 BEGIN
-    DECLARE from_balance DECIMAL(15, 2);
+    DECLARE from_acc_balance DECIMAL(15,2);
+    
+    SELECT balance INTO from_acc_balance 
+    FROM account 
+    WHERE account_id = from_account;
 
-    -- Retrieve the balance of the 'from' account
-    SELECT balance INTO from_balance FROM account WHERE account_id = from_account;
+    IF from_acc_balance >= amount THEN
+       
+        UPDATE account
+        SET balance = balance - amount
+        WHERE account_id = from_account;
 
-    -- Check if there is sufficient balance to perform the transfer
-    IF from_balance >= amount THEN
-        -- Deduct the amount from the 'from' account
-        UPDATE account SET balance = balance - amount WHERE account_id = from_account;
+       
+        UPDATE account
+        SET balance = balance + amount
+        WHERE account_id = to_account;
+        
+         INSERT INTO Transaction(Account_id, transaction_type, amount)
+        VALUES (from_account, 'debit', amount);
 
-        -- Add the amount to the 'to' account
-        UPDATE account SET balance = balance + amount WHERE account_id = to_account;
-
-        -- Insert transaction record for the 'from' account
-        INSERT INTO Transaction(account_id, transaction_type, amount) VALUES (from_account, 'transaction_out', amount);
-
-        -- Insert transaction record for the 'to' account
-        INSERT INTO Transaction(account_id, transaction_type, amount) VALUES (to_account, 'transaction_in', amount);
+        INSERT INTO Transaction(Account_id, transaction_type, amount)
+        VALUES (to_account, 'credit', amount);
     ELSE
-        -- Raise an error if there is insufficient balance
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Insufficient balance in from account';
-    END IF;
-END //
-DELIMITER ;*/
-
--- drop procedure withdraw_funds;
-
--- drop procedure deposit_funds;
-
-/*DELIMITER %
-
-CREATE PROCEDURE withdraw_funds(IN account_id INT, IN amount DECIMAL(15,2))
-BEGIN
-    DECLARE account_exists INT DEFAULT 0;
-    DECLARE acc_balance DECIMAL(15,2);
-
-    -- Check if the account exists
-    SELECT COUNT(*) INTO account_exists
-    FROM account
-    WHERE account_id = account_id;
-
-    IF account_exists = 0 THEN
-        -- Raise an error if the account does not exist
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Account does not exist';
-    ELSE
-        -- Retrieve the current balance of the account
-        SELECT balance INTO acc_balance
-        FROM account
-        WHERE account_id = account_id;
-
-        -- Check if there is sufficient balance for the withdrawal
-        IF acc_balance >= amount THEN
-            -- Deduct the amount from the account
-            UPDATE account
-            SET balance = balance - amount
-            WHERE account_id = account_id;
-            
-            -- Insert a transaction record for the withdrawal
-            INSERT INTO Transaction(account_id, transaction_type, amount)
-            VALUES (account_id, 'debit', amount);
-        ELSE
-            -- Raise an error if there is insufficient balance
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Insufficient balance in the account';
-        END IF;
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Insufficient balance in the source account';
     END IF;
 END %
 
 DELIMITER ;
 
+
+\\deposoit
 
 DELIMITER %
 CREATE PROCEDURE deposit_funds(IN account_id INT, IN amount DECIMAL(15,2))
@@ -112,12 +121,47 @@ BEGIN
         SET balance = balance + amount
         WHERE account_id = account_id;
         
- INSERT INTO Transaction(account_id, transaction_type, amount)
+        INSERT INTO Transaction(account_id, transaction_type, amount)
         VALUES (account_id, 'credit', amount);
     END IF;
 END %
-DELIMITER */;
--- ALTER TABLE Transaction ADD COLUMN transaction_type VARCHAR(20);
--- ALTER TABLE Transaction DROP COLUMN transaction_method;
--- view
-create view AccountBankView()
+DELIMITER ;
+
+
+\\withdraw
+DELIMITER %
+CREATE PROCEDURE withdraw_funds(IN account_id INT, IN amount DECIMAL(15,2))
+BEGIN
+    DECLARE account_exists INT DEFAULT 0;
+    DECLARE acc_balance DECIMAL(15,2);
+
+  
+    SELECT COUNT(*) INTO account_exists
+    FROM account
+    WHERE account_id = account_id;
+
+    IF account_exists = 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Account does not exist';
+    ELSE
+     
+        SELECT balance INTO acc_balance
+        FROM account
+        WHERE account_id = account_id;
+
+        IF acc_balance >= amount THEN
+       
+            UPDATE account
+            SET balance = balance - amount
+            WHERE account_id = account_id;
+            
+            
+            INSERT INTO Transaction(account_id, transaction_type, amount)
+            VALUES (account_id, 'debit', amount);
+        ELSE
+          
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Insufficient balance in the account';
+        END IF;
+    END IF;
+END %
+DELIMITER ;
+DROP PROCEDURE withdraw_funds;
